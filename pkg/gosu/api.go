@@ -123,6 +123,9 @@ func getUserScores[T any](c *Client, userID int64, kind string, limit, offset in
 	}
 	defer res.Body.Close()
 
+	if res.StatusCode == 404 {
+		return nil, ErrUserNotFound
+	}
 	if res.StatusCode != 200 {
 		return nil, &StatusError{Code: res.StatusCode, Status: res.Status}
 	}
@@ -135,7 +138,7 @@ func getUserScores[T any](c *Client, userID int64, kind string, limit, offset in
 	return scores, nil
 }
 
-// GetRecentScores fetches one page of a user's recent scores newest first
+// GetRecentScores fetches one page of a user's recent scores newest first or ErrUserNotFound
 func (c *Client) GetRecentScores(userID int64, limit, offset int) (FullScores, error) {
 	return getUserScores[FullScore](c, userID, "recent", limit, offset)
 }
