@@ -143,6 +143,12 @@ func (c *Client) GetRecentScores(userID int64, limit, offset int) (FullScores, e
 	return getUserScores[FullScore](c, userID, "recent", limit, offset)
 }
 
+// GetBestScores fetches one page of a user's top plays ordered by pp descending or ErrUserNotFound
+// osu! clamps limit between 1 and 100 and keeps at most 200 best scores per player
+func (c *Client) GetBestScores(userID int64, limit, offset int) (BestScores, error) {
+	return getUserScores[BestScore](c, userID, "best", limit, offset)
+}
+
 // GetScores fetches one page of the ruleset's global scores feed by cursor and returns the next cursor
 // Scores carry a beatmap_id but no embedded beatmap
 func (c *Client) GetScores(ruleset, cursor string) (Scores, string, error) {
