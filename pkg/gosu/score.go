@@ -103,6 +103,24 @@ type FullScore struct {
 	Beatmapset Beatmapset      `json:"beatmapset"`
 }
 
+// ScoreWeight is a score's contribution to a player's total pp under osu!'s
+// top-100 weighting.
+type ScoreWeight struct {
+	// Percentage is the weight as a percentage: 100, 95, 90.25, and so on down the
+	// rank. It follows the score's absolute position, so a page fetched at an offset
+	// continues from that offset rather than restarting at 100.
+	Percentage float64 `json:"percentage"`
+	// PP is the score's pp after the weight is applied.
+	PP float64 `json:"pp"`
+}
+
+// BestScore is one of a player's top plays, as the best-scores endpoint returns it:
+// a FullScore plus the weight only that endpoint reports.
+type BestScore struct {
+	FullScore
+	Weight ScoreWeight `json:"weight"`
+}
+
 // Mode is the score's ruleset as a mode name (osu/taiko/fruits/mania). The
 // solo_score wire reports the mode as a numeric ruleset id.
 func (s Score) Mode() string {
@@ -125,6 +143,9 @@ type Scores []Score
 // FullScores is a list of scores with their maps embedded, as the user-scores and
 // beatmap-scores endpoints return.
 type FullScores []FullScore
+
+// BestScores is a page of a player's top plays ordered by pp descending.
+type BestScores []BestScore
 
 func (s Scores) String() (res string) {
 	res = ""
