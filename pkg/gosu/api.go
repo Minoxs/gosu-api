@@ -111,9 +111,10 @@ func (c *Client) GetUserByName(username string) (*UserExtended, error) {
 	return decodeUserExtended(res)
 }
 
-// GetRecentScores fetches one page of a user's recent scores newest first
-func (c *Client) GetRecentScores(userid int64, limit, offset int) (FullScores, error) {
-	endpoint := fmt.Sprintf("users/%d/scores/recent/?mode=osu&limit=%d&offset=%d", userid, limit, offset)
+// getUserScores fetches one page of users/{id}/scores/{kind}, decoding into the
+// score shape that kind returns.
+func getUserScores[T any](c *Client, userID int64, kind string, limit, offset int) ([]T, error) {
+	endpoint := fmt.Sprintf("users/%d/scores/%s?mode=osu&limit=%d&offset=%d", userID, kind, limit, offset)
 
 	req, _ := http.NewRequest(http.MethodGet, APIv2URL(endpoint), nil)
 	res, err := c.http.Do(req)
@@ -122,16 +123,30 @@ func (c *Client) GetRecentScores(userid int64, limit, offset int) (FullScores, e
 	}
 	defer res.Body.Close()
 
+	if res.StatusCode == 404 {
+		return nil, ErrUserNotFound
+	}
 	if res.StatusCode != 200 {
 		return nil, &StatusError{Code: res.StatusCode, Status: res.Status}
 	}
 
-	scores := make(FullScores, 0)
+	scores := make([]T, 0)
 	if err := json.NewDecoder(res.Body).Decode(&scores); err != nil {
 		return nil, err
 	}
 
 	return scores, nil
+}
+
+// GetRecentScores fetches one page of a user's recent scores newest first or ErrUserNotFound
+func (c *Client) GetRecentScores(userID int64, limit, offset int) (FullScores, error) {
+	return getUserScores[FullScore](c, userID, "recent", limit, offset)
+}
+
+// GetBestScores fetches one page of a user's top plays ordered by pp descending or ErrUserNotFound
+// osu! clamps limit between 1 and 100 and keeps at most 200 best scores per player
+func (c *Client) GetBestScores(userID int64, limit, offset int) (BestScores, error) {
+	return getUserScores[BestScore](c, userID, "best", limit, offset)
 }
 
 // GetScores fetches one page of the ruleset's global scores feed by cursor and returns the next cursor

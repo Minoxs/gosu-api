@@ -141,3 +141,53 @@ func TestGetOwnUserHitsMeEndpoint(t *testing.T) {
 		t.Errorf("requested %s, want me/osu", rt.lastURL)
 	}
 }
+
+func TestGetRecentScoresHitsRecentPath(t *testing.T) {
+	rt := &roundTripFunc{body: `[{"id":9,"beatmap":{"id":3}}]`}
+	got, err := clientWith(rt).GetRecentScores(7, 50, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].ID != 9 || got[0].Beatmap.ID != 3 {
+		t.Fatalf("scores = %+v, want one score id 9 on beatmap 3", got)
+	}
+	if !strings.Contains(rt.lastURL, "users/7/scores/recent") {
+		t.Errorf("requested %s, want users/7/scores/recent", rt.lastURL)
+	}
+}
+
+func TestGetBestScoresHitsBestPath(t *testing.T) {
+	rt := &roundTripFunc{body: `[]`}
+	if _, err := clientWith(rt).GetBestScores(7, 50, 10); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"users/7/scores/best", "mode=osu", "limit=50", "offset=10"} {
+		if !strings.Contains(rt.lastURL, want) {
+			t.Errorf("requested %s, want it to contain %s", rt.lastURL, want)
+		}
+	}
+}
+
+func TestGetBestScoresDecodesWeight(t *testing.T) {
+	rt := &roundTripFunc{body: `[{"id":9,"pp":200,"weight":{"percentage":95,"pp":190}}]`}
+	got, err := clientWith(rt).GetBestScores(7, 1, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("scores = %+v, want one", got)
+	}
+	if got[0].PP != 200 {
+		t.Errorf("pp = %v, want 200", got[0].PP)
+	}
+	if got[0].Weight.Percentage != 95 || got[0].Weight.PP != 190 {
+		t.Errorf("weight = %+v, want percentage 95 pp 190", got[0].Weight)
+	}
+}
+
+func TestGetUserScoresNotFound(t *testing.T) {
+	rt := &roundTripFunc{status: 404}
+	if _, err := clientWith(rt).GetBestScores(7, 1, 0); !errors.Is(err, ErrUserNotFound) {
+		t.Fatalf("err = %v, want ErrUserNotFound", err)
+	}
+}
