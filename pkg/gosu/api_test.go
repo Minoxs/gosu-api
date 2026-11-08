@@ -209,6 +209,39 @@ func (b *bodyRecorder) RoundTrip(req *http.Request) (*http.Response, error) {
 	return b.respond.RoundTrip(req)
 }
 
+func TestGetBeatmapsKeepsNullSetNil(t *testing.T) {
+	rt := &roundTripFunc{body: `{"beatmaps":[{"id":5,"beatmapset":null}]}`}
+	got, err := clientWith(rt).GetBeatmaps([]int64{5})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got[0].Beatmapset != nil {
+		t.Fatalf("set = %+v, want nil", got[0].Beatmapset)
+	}
+}
+
+func TestGetBeatmapDecodesMaxCombo(t *testing.T) {
+	rt := &roundTripFunc{body: `{"id":5,"max_combo":600,"beatmapset":{"id":3}}`}
+	got, err := clientWith(rt).GetBeatmap(5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != 5 || got.MaxCombo != 600 || got.Beatmapset.ID != 3 {
+		t.Fatalf("beatmap = %+v", got)
+	}
+}
+
+func TestGetBeatmapScoresDecodesScores(t *testing.T) {
+	rt := &roundTripFunc{body: `{"scores":[{"id":9,"beatmap_id":5,"pp":12.5}]}`}
+	got, err := clientWith(rt).GetBeatmapScores(1, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].ID != 9 || got[0].PP != 12.5 {
+		t.Fatalf("scores = %+v", got)
+	}
+}
+
 func TestGetOwnUserHitsMeEndpoint(t *testing.T) {
 	rt := &roundTripFunc{body: `{"id":5,"username":"me"}`}
 	user, err := resourceClientWith(rt).GetOwnUser()

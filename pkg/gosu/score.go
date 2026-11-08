@@ -35,7 +35,6 @@ type BeatmapExtended struct {
 	StarRating    float32       `json:"difficulty_rating"`
 	Status        BeatmapStatus `json:"status"`
 	Mode          string        `json:"mode"`
-	MaxCombo      int           `json:"max_combo"`
 	TotalLength   int           `json:"total_length"`
 	BPM           *float32      `json:"bpm"`
 	OD            float32       `json:"accuracy"`
@@ -96,14 +95,17 @@ type Beatmapset struct {
 // for its title, artist, and cover art.
 type FullBeatmap struct {
 	BeatmapExtended
-	Beatmapset Beatmapset `json:"beatmapset"`
+	MaxCombo int `json:"max_combo"`
+	// Beatmapset is nil for a beatmap osu! holds no set for, such as a deleted one
+	Beatmapset *Beatmapset `json:"beatmapset"`
 }
 
 // Score is an osu! API v2 "solo_score": one play as osu! stores it under the
 // lazer submission pipeline. Requests must send a modern x-api-version to receive
 // this shape. It is the lean form the global scores feed returns, carrying only a
 // beatmap_id and no embedded beatmap or beatmapset. Use FullScore where the API
-// embeds those, such as the user-scores endpoints.
+// embeds those, such as the user-scores endpoints. A user's scores on one beatmap
+// also come in this form.
 type Score struct {
 	ID         int64     `json:"id"`
 	UserID     int64     `json:"user_id"`
@@ -127,7 +129,7 @@ type Score struct {
 }
 
 // FullScore is a Score as the endpoints that embed the map return it: a user's
-// score list or a beatmap's score list carry both the beatmap and its set inline.
+// score list carries both the beatmap and its set inline.
 type FullScore struct {
 	Score
 	Beatmap    BeatmapExtended `json:"beatmap"`
