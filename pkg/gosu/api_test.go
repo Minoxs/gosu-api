@@ -209,6 +209,17 @@ func (b *bodyRecorder) RoundTrip(req *http.Request) (*http.Response, error) {
 	return b.respond.RoundTrip(req)
 }
 
+func TestGetBeatmapsKeepsNullSetNil(t *testing.T) {
+	rt := &roundTripFunc{body: `{"beatmaps":[{"id":5,"beatmapset":null}]}`}
+	got, err := clientWith(rt).GetBeatmaps([]int64{5})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got[0].Beatmapset != nil {
+		t.Fatalf("set = %+v, want nil", got[0].Beatmapset)
+	}
+}
+
 func TestGetBeatmapDecodesMaxCombo(t *testing.T) {
 	rt := &roundTripFunc{body: `{"id":5,"max_combo":600,"beatmapset":{"id":3}}`}
 	got, err := clientWith(rt).GetBeatmap(5)

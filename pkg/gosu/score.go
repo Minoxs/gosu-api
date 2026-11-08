@@ -95,8 +95,9 @@ type Beatmapset struct {
 // for its title, artist, and cover art.
 type FullBeatmap struct {
 	BeatmapExtended
-	MaxCombo   int        `json:"max_combo"`
-	Beatmapset Beatmapset `json:"beatmapset"`
+	MaxCombo int `json:"max_combo"`
+	// Beatmapset is nil for a beatmap osu! holds no set for, such as a deleted one
+	Beatmapset *Beatmapset `json:"beatmapset"`
 }
 
 // Score is an osu! API v2 "solo_score": one play as osu! stores it under the
