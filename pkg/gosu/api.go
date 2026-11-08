@@ -205,24 +205,23 @@ func (c *Client) GetBeatmapScores(userID int64, beatmapID int64) (Scores, error)
 }
 
 // GetBeatmap fetches a beatmap and its owning beatmapset by id
-// Its max_combo is real unlike a score's embedded beatmap
-func (c *Client) GetBeatmap(id int64) (BeatmapExtended, Beatmapset, error) {
+func (c *Client) GetBeatmap(id int64) (FullBeatmap, error) {
 	req, _ := http.NewRequest(http.MethodGet, APIv2URL(fmt.Sprintf("beatmaps/%d", id)), nil)
 	res, err := c.http.Do(req)
 	if err != nil {
-		return BeatmapExtended{}, Beatmapset{}, err
+		return FullBeatmap{}, err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		return BeatmapExtended{}, Beatmapset{}, &StatusError{Code: res.StatusCode, Status: res.Status}
+		return FullBeatmap{}, &StatusError{Code: res.StatusCode, Status: res.Status}
 	}
 
 	body := FullBeatmap{}
 	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
-		return BeatmapExtended{}, Beatmapset{}, err
+		return FullBeatmap{}, err
 	}
-	return body.BeatmapExtended, body.Beatmapset, nil
+	return body, nil
 }
 
 // GetBeatmapAttributes fetches a beatmap's difficulty under a mod combination in its own ruleset

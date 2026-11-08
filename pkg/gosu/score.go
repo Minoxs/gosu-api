@@ -35,7 +35,6 @@ type BeatmapExtended struct {
 	StarRating    float32       `json:"difficulty_rating"`
 	Status        BeatmapStatus `json:"status"`
 	Mode          string        `json:"mode"`
-	MaxCombo      int           `json:"max_combo"`
 	TotalLength   int           `json:"total_length"`
 	BPM           *float32      `json:"bpm"`
 	OD            float32       `json:"accuracy"`
@@ -96,6 +95,7 @@ type Beatmapset struct {
 // for its title, artist, and cover art.
 type FullBeatmap struct {
 	BeatmapExtended
+	MaxCombo   int        `json:"max_combo"`
 	Beatmapset Beatmapset `json:"beatmapset"`
 }
 
