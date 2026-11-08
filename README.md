@@ -66,7 +66,7 @@ I am building this on a best-effort basis mostly to get what I need done first. 
 |--------------|-------------------------------------------------------------|
 | OAuth Tokens | Client credentials, authorization code, and refresh grants. |
 | Users        | Fetch user data, recent scores, and top plays.              |
-| Beatmaps     | Fetch beatmap metadata.                                     |
+| Beatmaps     | Fetch beatmap metadata and difficulty attributes.           |
 | Scores       | Fetch recent scores and top plays.                          |
 
 **osu!standard only.**

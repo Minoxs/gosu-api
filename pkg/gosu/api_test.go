@@ -128,6 +128,87 @@ func TestGetBeatmapsDecodesSet(t *testing.T) {
 	}
 }
 
+func TestGetBeatmapsDecodesFullMetadata(t *testing.T) {
+	rt := &roundTripFunc{body: `{"beatmaps":[{"id":5,"bpm":222.5,"total_length":90,"hit_length":80,"checksum":"abc",
+		"last_updated":"2024-01-02T03:04:05Z","deleted_at":null,
+		"beatmapset":{"id":3,"status":"ranked","title_unicode":"t2","user_id":7,"track_id":null}}]}`}
+	got, err := clientWith(rt).GetBeatmaps([]int64{5})
+	if err != nil {
+		t.Fatal(err)
+	}
+	bm := got[0]
+	if bm.BPM == nil || *bm.BPM != 222.5 || bm.TotalLength != 90 || bm.HitLength != 80 {
+		t.Fatalf("beatmap = %+v", bm.BeatmapExtended)
+	}
+	if bm.Checksum == nil || *bm.Checksum != "abc" {
+		t.Fatalf("checksum = %v", bm.Checksum)
+	}
+	if bm.LastUpdated.IsZero() || bm.DeletedAt != nil {
+		t.Fatalf("timestamps = %v, %v", bm.LastUpdated, bm.DeletedAt)
+	}
+	if bm.Beatmapset.Status != StatusRanked || bm.Beatmapset.TitleUnicode != "t2" || bm.Beatmapset.UserID != 7 {
+		t.Fatalf("set = %+v", bm.Beatmapset)
+	}
+}
+
+func TestGetBeatmapsKeepsNullableFieldsNull(t *testing.T) {
+	rt := &roundTripFunc{body: `{"beatmaps":[{"id":5,"bpm":null,"checksum":null,"beatmapset":{"id":3}}]}`}
+	got, err := clientWith(rt).GetBeatmaps([]int64{5})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got[0].BPM != nil || got[0].Checksum != nil {
+		t.Fatalf("bpm %v checksum %v, want nil", got[0].BPM, got[0].Checksum)
+	}
+}
+
+func TestGetBeatmapAttributesPostsMods(t *testing.T) {
+	var body string
+	rt := &bodyRecorder{respond: &roundTripFunc{body: `{"attributes":{"star_rating":7.25,"max_combo":900}}`}, body: &body}
+	got, err := clientWith(rt).GetBeatmapAttributes(5, []string{"DT", "HR"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.StarRating != 7.25 || got.MaxCombo != 900 {
+		t.Fatalf("attributes = %+v", got)
+	}
+	if !strings.HasSuffix(rt.respond.lastURL, "beatmaps/5/attributes") {
+		t.Fatalf("url = %q", rt.respond.lastURL)
+	}
+	if rt.method != http.MethodPost || rt.respond.lastHeader.Get("Content-Type") != "application/json" {
+		t.Fatalf("method %q header %v", rt.method, rt.respond.lastHeader)
+	}
+	if body != `{"mods":["DT","HR"]}` {
+		t.Fatalf("body = %s", body)
+	}
+}
+
+func TestGetBeatmapAttributesNotFound(t *testing.T) {
+	rt := &roundTripFunc{status: 404}
+	_, err := clientWith(rt).GetBeatmapAttributes(5, nil)
+	var status *StatusError
+	if !errors.As(err, &status) || status.Code != 404 {
+		t.Fatalf("err = %v, want a 404 StatusError", err)
+	}
+}
+
+// bodyRecorder captures the request body and method before delegating the response.
+type bodyRecorder struct {
+	respond *roundTripFunc
+	body    *string
+	method  string
+}
+
+func (b *bodyRecorder) RoundTrip(req *http.Request) (*http.Response, error) {
+	raw, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
+	*b.body = string(raw)
+	b.method = req.Method
+	return b.respond.RoundTrip(req)
+}
+
 func TestGetOwnUserHitsMeEndpoint(t *testing.T) {
 	rt := &roundTripFunc{body: `{"id":5,"username":"me"}`}
 	user, err := resourceClientWith(rt).GetOwnUser()

@@ -1,6 +1,7 @@
 package gosu
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -222,6 +223,37 @@ func (c *Client) GetBeatmap(id int64) (BeatmapExtended, Beatmapset, error) {
 		return BeatmapExtended{}, Beatmapset{}, err
 	}
 	return body.BeatmapExtended, body.Beatmapset, nil
+}
+
+// GetBeatmapAttributes fetches a beatmap's difficulty under a mod combination in its own ruleset
+// Mods are acronyms
+func (c *Client) GetBeatmapAttributes(id int64, mods []string) (DifficultyAttributes, error) {
+	payload, err := json.Marshal(struct {
+		Mods []string `json:"mods,omitempty"`
+	}{Mods: mods})
+	if err != nil {
+		return DifficultyAttributes{}, err
+	}
+
+	req, _ := http.NewRequest(http.MethodPost, APIv2URL(fmt.Sprintf("beatmaps/%d/attributes", id)), bytes.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	res, err := c.http.Do(req)
+	if err != nil {
+		return DifficultyAttributes{}, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		return DifficultyAttributes{}, &StatusError{Code: res.StatusCode, Status: res.Status}
+	}
+
+	body := struct {
+		Attributes DifficultyAttributes `json:"attributes"`
+	}{}
+	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+		return DifficultyAttributes{}, err
+	}
+	return body.Attributes, nil
 }
 
 // GetUsers fetches profiles for many ids in one request keyed by id in any order
