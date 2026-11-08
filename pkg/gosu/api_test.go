@@ -162,6 +162,53 @@ func TestGetBeatmapsKeepsNullableFieldsNull(t *testing.T) {
 	}
 }
 
+func TestGetBeatmapAttributesPostsMods(t *testing.T) {
+	var body string
+	rt := &bodyRecorder{respond: &roundTripFunc{body: `{"attributes":{"star_rating":7.25,"max_combo":900}}`}, body: &body}
+	got, err := clientWith(rt).GetBeatmapAttributes(5, []string{"DT", "HR"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.StarRating != 7.25 || got.MaxCombo != 900 {
+		t.Fatalf("attributes = %+v", got)
+	}
+	if !strings.HasSuffix(rt.respond.lastURL, "beatmaps/5/attributes") {
+		t.Fatalf("url = %q", rt.respond.lastURL)
+	}
+	if rt.method != http.MethodPost || rt.respond.lastHeader.Get("Content-Type") != "application/json" {
+		t.Fatalf("method %q header %v", rt.method, rt.respond.lastHeader)
+	}
+	if body != `{"mods":["DT","HR"]}` {
+		t.Fatalf("body = %s", body)
+	}
+}
+
+func TestGetBeatmapAttributesNotFound(t *testing.T) {
+	rt := &roundTripFunc{status: 404}
+	_, err := clientWith(rt).GetBeatmapAttributes(5, nil)
+	var status *StatusError
+	if !errors.As(err, &status) || status.Code != 404 {
+		t.Fatalf("err = %v, want a 404 StatusError", err)
+	}
+}
+
+// bodyRecorder captures the request body and method before delegating the response.
+type bodyRecorder struct {
+	respond *roundTripFunc
+	body    *string
+	method  string
+}
+
+func (b *bodyRecorder) RoundTrip(req *http.Request) (*http.Response, error) {
+	raw, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
+	*b.body = string(raw)
+	b.method = req.Method
+	return b.respond.RoundTrip(req)
+}
+
 func TestGetOwnUserHitsMeEndpoint(t *testing.T) {
 	rt := &roundTripFunc{body: `{"id":5,"username":"me"}`}
 	user, err := resourceClientWith(rt).GetOwnUser()

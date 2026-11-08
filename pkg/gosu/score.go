@@ -55,6 +55,12 @@ type BeatmapExtended struct {
 	DeletedAt     *time.Time    `json:"deleted_at"`
 }
 
+// DifficultyAttributes is a beatmap's difficulty under one mod combination. Star rating
+// and max combo are the fields osu! returns for every ruleset.
+type DifficultyAttributes struct {
+	StarRating float32 `json:"star_rating"`
+	MaxCombo   int     `json:"max_combo"`
+}
 
 // Covers holds the image URLs the osu API attaches to a beatmapset.
 type Covers struct {
