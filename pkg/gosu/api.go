@@ -180,7 +180,7 @@ func (c *Client) GetScores(ruleset, cursor string) (Scores, string, error) {
 }
 
 // GetBeatmapScores fetches all of a user's scores on one beatmap
-func (c *Client) GetBeatmapScores(userID int64, beatmapID int64) (FullScores, error) {
+func (c *Client) GetBeatmapScores(userID int64, beatmapID int64) (Scores, error) {
 	endpoint := fmt.Sprintf("beatmaps/%d/scores/users/%d/all", beatmapID, userID)
 
 	req, _ := http.NewRequest(http.MethodGet, APIv2URL(endpoint), nil)
@@ -195,7 +195,7 @@ func (c *Client) GetBeatmapScores(userID int64, beatmapID int64) (FullScores, er
 	}
 
 	s := struct {
-		Scores FullScores `json:"scores"`
+		Scores Scores `json:"scores"`
 	}{}
 	if err := json.NewDecoder(res.Body).Decode(&s); err != nil {
 		return nil, err

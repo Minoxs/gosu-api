@@ -209,6 +209,17 @@ func (b *bodyRecorder) RoundTrip(req *http.Request) (*http.Response, error) {
 	return b.respond.RoundTrip(req)
 }
 
+func TestGetBeatmapScoresDecodesScores(t *testing.T) {
+	rt := &roundTripFunc{body: `{"scores":[{"id":9,"beatmap_id":5,"pp":12.5}]}`}
+	got, err := clientWith(rt).GetBeatmapScores(1, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].ID != 9 || got[0].PP != 12.5 {
+		t.Fatalf("scores = %+v", got)
+	}
+}
+
 func TestGetOwnUserHitsMeEndpoint(t *testing.T) {
 	rt := &roundTripFunc{body: `{"id":5,"username":"me"}`}
 	user, err := resourceClientWith(rt).GetOwnUser()

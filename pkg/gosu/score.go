@@ -103,7 +103,8 @@ type FullBeatmap struct {
 // lazer submission pipeline. Requests must send a modern x-api-version to receive
 // this shape. It is the lean form the global scores feed returns, carrying only a
 // beatmap_id and no embedded beatmap or beatmapset. Use FullScore where the API
-// embeds those, such as the user-scores endpoints.
+// embeds those, such as the user-scores endpoints. A user's scores on one beatmap
+// also come in this form.
 type Score struct {
 	ID         int64     `json:"id"`
 	UserID     int64     `json:"user_id"`
@@ -127,7 +128,7 @@ type Score struct {
 }
 
 // FullScore is a Score as the endpoints that embed the map return it: a user's
-// score list or a beatmap's score list carry both the beatmap and its set inline.
+// score list carries both the beatmap and its set inline.
 type FullScore struct {
 	Score
 	Beatmap    BeatmapExtended `json:"beatmap"`
