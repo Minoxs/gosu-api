@@ -128,6 +128,40 @@ func TestGetBeatmapsDecodesSet(t *testing.T) {
 	}
 }
 
+func TestGetBeatmapsDecodesFullMetadata(t *testing.T) {
+	rt := &roundTripFunc{body: `{"beatmaps":[{"id":5,"bpm":222.5,"total_length":90,"hit_length":80,"checksum":"abc",
+		"last_updated":"2024-01-02T03:04:05Z","deleted_at":null,
+		"beatmapset":{"id":3,"status":"ranked","title_unicode":"t2","user_id":7,"track_id":null}}]}`}
+	got, err := clientWith(rt).GetBeatmaps([]int64{5})
+	if err != nil {
+		t.Fatal(err)
+	}
+	bm := got[0]
+	if bm.BPM == nil || *bm.BPM != 222.5 || bm.TotalLength != 90 || bm.HitLength != 80 {
+		t.Fatalf("beatmap = %+v", bm.BeatmapExtended)
+	}
+	if bm.Checksum == nil || *bm.Checksum != "abc" {
+		t.Fatalf("checksum = %v", bm.Checksum)
+	}
+	if bm.LastUpdated.IsZero() || bm.DeletedAt != nil {
+		t.Fatalf("timestamps = %v, %v", bm.LastUpdated, bm.DeletedAt)
+	}
+	if bm.Beatmapset.Status != StatusRanked || bm.Beatmapset.TitleUnicode != "t2" || bm.Beatmapset.UserID != 7 {
+		t.Fatalf("set = %+v", bm.Beatmapset)
+	}
+}
+
+func TestGetBeatmapsKeepsNullableFieldsNull(t *testing.T) {
+	rt := &roundTripFunc{body: `{"beatmaps":[{"id":5,"bpm":null,"checksum":null,"beatmapset":{"id":3}}]}`}
+	got, err := clientWith(rt).GetBeatmaps([]int64{5})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got[0].BPM != nil || got[0].Checksum != nil {
+		t.Fatalf("bpm %v checksum %v, want nil", got[0].BPM, got[0].Checksum)
+	}
+}
+
 func TestGetOwnUserHitsMeEndpoint(t *testing.T) {
 	rt := &roundTripFunc{body: `{"id":5,"username":"me"}`}
 	user, err := resourceClientWith(rt).GetOwnUser()

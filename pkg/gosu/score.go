@@ -28,12 +28,16 @@ func (s BeatmapStatus) AwardsPP() bool {
 // attributes (ar, cs, od, drain, object counts) the compact beatmap omits.
 type BeatmapExtended struct {
 	ID            int64         `json:"id"`
+	BeatmapsetID  int64         `json:"beatmapset_id"`
+	UserID        int64         `json:"user_id"`
 	Version       string        `json:"version"`
+	Checksum      *string       `json:"checksum"`
 	StarRating    float32       `json:"difficulty_rating"`
 	Status        BeatmapStatus `json:"status"`
 	Mode          string        `json:"mode"`
 	MaxCombo      int           `json:"max_combo"`
 	TotalLength   int           `json:"total_length"`
+	BPM           *float32      `json:"bpm"`
 	OD            float32       `json:"accuracy"`
 	Ar            float32       `json:"ar"`
 	CountCircles  int           `json:"count_circles"`
@@ -42,7 +46,15 @@ type BeatmapExtended struct {
 	CS            float32       `json:"cs"`
 	HP            float32       `json:"drain"`
 	HitLength     int           `json:"hit_length"`
+	Convert       bool          `json:"convert"`
+	IsScoreable   bool          `json:"is_scoreable"`
+	PassCount     int           `json:"passcount"`
+	PlayCount     int           `json:"playcount"`
+	URL           string        `json:"url"`
+	LastUpdated   time.Time     `json:"last_updated"`
+	DeletedAt     *time.Time    `json:"deleted_at"`
 }
+
 
 // Covers holds the image URLs the osu API attaches to a beatmapset.
 type Covers struct {
@@ -53,11 +65,24 @@ type Covers struct {
 }
 
 type Beatmapset struct {
-	ID      int64  `json:"id"`
-	Title   string `json:"title"`
-	Artist  string `json:"artist"`
-	Creator string `json:"creator"`
-	Covers  Covers `json:"covers"`
+	ID             int64         `json:"id"`
+	UserID         int64         `json:"user_id"`
+	Title          string        `json:"title"`
+	TitleUnicode   string        `json:"title_unicode"`
+	Artist         string        `json:"artist"`
+	ArtistUnicode  string        `json:"artist_unicode"`
+	Creator        string        `json:"creator"`
+	Source         string        `json:"source"`
+	Status         BeatmapStatus `json:"status"`
+	PreviewURL     string        `json:"preview_url"`
+	Offset         int           `json:"offset"`
+	NSFW           bool          `json:"nsfw"`
+	Video          bool          `json:"video"`
+	Spotlight      bool          `json:"spotlight"`
+	TrackID        *int64        `json:"track_id"`
+	FavouriteCount int           `json:"favourite_count"`
+	PlayCount      int           `json:"play_count"`
+	Covers         Covers        `json:"covers"`
 }
 
 // FullBeatmap is a beatmap with its owning set embedded, as the single-beatmap and
