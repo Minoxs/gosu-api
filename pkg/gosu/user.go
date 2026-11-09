@@ -293,3 +293,11 @@ type UserExtended struct {
 	UserAchievements                 []UserAchievement       `json:"user_achievements"`
 	Website                          *string                 `json:"website"`
 }
+
+// OwnUser is the profile of the user a resource token belongs to
+type OwnUser struct {
+	UserExtended
+	IsRestricted       *bool                   `json:"is_restricted"`
+	SessionVerified    bool                    `json:"session_verified"`
+	StatisticsRulesets *UserStatisticsRulesets `json:"statistics_rulesets"`
+}

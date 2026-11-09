@@ -113,6 +113,19 @@ func TestGetUserFillsEveryField(t *testing.T) {
 	assertFilled(t, "user", reflect.ValueOf(*user))
 }
 
+func TestGetOwnUserFillsEveryField(t *testing.T) {
+	var body = `{` + userExtendedJSON + `,"is_restricted":true,"session_verified":true,"statistics_rulesets":{"osu":{` + userStatisticsJSON + `}}}`
+
+	var keys OwnUser
+	decodeStrict(t, body, &keys)
+
+	user, err := resourceClientWith(&roundTripFunc{body: body}).GetOwnUser()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertFilled(t, "user", reflect.ValueOf(*user))
+}
+
 func TestGetUsersFillsEveryField(t *testing.T) {
 	var entry = `{` + userJSON + `,` + userAttributesJSON + `,"statistics_rulesets":{"osu":{` + userStatisticsJSON + `}}}`
 
