@@ -8,16 +8,47 @@ type Ranks struct {
 	Country *int `json:"country"`
 }
 
+// Level is a user's level and the percentage progress towards the next one.
+type Level struct {
+	Current  int     `json:"current"`
+	Progress float64 `json:"progress"`
+}
+
+// GradeCounts is how many ranked scores a user holds at each grade.
+type GradeCounts struct {
+	A   int `json:"a"`
+	S   int `json:"s"`
+	SH  int `json:"sh"`
+	SS  int `json:"ss"`
+	SSH int `json:"ssh"`
+}
+
 // UserStatistics is a user's osu!standard ranking summary. The single-user endpoint
 // returns it under statistics; the bulk users endpoint returns it per ruleset under
 // statistics_rulesets, so it is named for reuse across both.
 type UserStatistics struct {
-	PP          float64 `json:"pp"`
-	HitAccuracy float64 `json:"hit_accuracy"`
-	PlayCount   int     `json:"play_count"`
-	GlobalRank  *int    `json:"global_rank"`
-	CountryRank *int    `json:"country_rank"`
-	Rank        Ranks   `json:"rank"`
+	Accuracy float64 `json:"accuracy"`
+	// Deprecated: use Accuracy, which is a fraction in [0, 1] where this is a percentage
+	HitAccuracy            float64     `json:"hit_accuracy"`
+	Count100               int         `json:"count_100"`
+	Count300               int         `json:"count_300"`
+	Count50                int         `json:"count_50"`
+	CountMiss              int         `json:"count_miss"`
+	GlobalRank             *int        `json:"global_rank"`
+	GlobalRankPercent      *float64    `json:"global_rank_percent"`
+	GradeCounts            GradeCounts `json:"grade_counts"`
+	IsRanked               bool        `json:"is_ranked"`
+	Level                  Level       `json:"level"`
+	MaximumCombo           int         `json:"maximum_combo"`
+	PlayCount              int         `json:"play_count"`
+	PlayTime               int         `json:"play_time"`
+	PP                     float64     `json:"pp"`
+	RankedScore            int64       `json:"ranked_score"`
+	ReplaysWatchedByOthers int         `json:"replays_watched_by_others"`
+	TotalHits              int64       `json:"total_hits"`
+	TotalScore             int64       `json:"total_score"`
+	CountryRank            *int        `json:"country_rank"`
+	Rank                   Ranks       `json:"rank"`
 }
 
 // Country is an osu! user's country, present when the country attribute is included.
