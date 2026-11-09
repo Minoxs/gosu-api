@@ -103,8 +103,9 @@ func TestUserStatisticsMapsEveryKey(t *testing.T) {
 // osu! falls back to the user's default mode when the path omits one
 func TestUserEndpointsRequestStandard(t *testing.T) {
 	var calls = map[string]func(*Client) error{
-		"users/2/osu":              func(c *Client) error { _, err := c.GetUser(2); return err },
-		"users/a/osu?key=username": func(c *Client) error { _, err := c.GetUserByName("a"); return err },
+		"users/2/osu":                  func(c *Client) error { _, err := c.GetUser(2); return err },
+		"users/a/osu?key=username":     func(c *Client) error { _, err := c.GetUserByName("a"); return err },
+		"users/a%23b/osu?key=username": func(c *Client) error { _, err := c.GetUserByName("a#b"); return err },
 	}
 	for want, call := range calls {
 		var rt = &roundTripFunc{body: `{"id":2}`}

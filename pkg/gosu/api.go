@@ -88,7 +88,7 @@ func (c *Client) GetUser(id int64) (*UserExtended, error) {
 
 // GetUserByName fetches a profile by username or ErrUserNotFound
 func (c *Client) GetUserByName(username string) (*UserExtended, error) {
-	req, _ := http.NewRequest(http.MethodGet, APIv2URL(fmt.Sprintf("users/%s/osu?key=username", username)), nil)
+	req, _ := http.NewRequest(http.MethodGet, APIv2URL(fmt.Sprintf("users/%s/osu?key=username", url.PathEscape(username))), nil)
 	res, err := c.http.Do(req)
 	if err != nil {
 		return nil, err
