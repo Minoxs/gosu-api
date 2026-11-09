@@ -26,6 +26,31 @@ const userStatisticsJSON = `"accuracy":0.97,"hit_accuracy":97.0,"count_100":1,"c
 
 const userStatisticsExtendedJSON = userStatisticsJSON + `,"country_rank":11,"rank":{"country":11}`
 
+const userExtendedJSON = userJSON + `,` + userAttributesJSON + `,"statistics":{` + userStatisticsExtendedJSON + `},
+	"account_history":[{"description":"d","id":1,"length":60,"permanent":true,"timestamp":"2026-01-02T03:04:05Z","type":"note"}],
+	"active_tournament_banner":{"id":1,"tournament_id":2,"image":"i","image@2x":"i2"},
+	"active_tournament_banners":[{"id":1,"tournament_id":2,"image":"i","image@2x":"i2"}],
+	"badges":[{"awarded_at":"2026-01-02T03:04:05Z","description":"d","image":"b.png","image@2x_url":"b2","image_url":"b1","url":"u"}],
+	"beatmap_playcounts_count":1,"comments_count":2,"cover_url":"https://c",
+	"daily_challenge_user_stats":{"daily_streak_best":1,"daily_streak_current":2,"last_update":"2026-01-02T00:00:00Z",
+	"last_weekly_streak":"2026-01-02T00:00:00Z","playcount":3,"top_10p_placements":4,"top_50p_placements":5,"user_id":2,
+	"weekly_streak_best":6,"weekly_streak_current":7},
+	"discord":"d","favourite_beatmapset_count":3,"follower_count":4,"graveyard_beatmapset_count":5,"guest_beatmapset_count":6,
+	"has_supported":true,"interests":"i","join_date":"2007-08-28T03:09:12Z","kudosu":{"available":1,"total":2},"location":"l",
+	"loved_beatmapset_count":7,"mapping_follower_count":8,
+	"matchmaking_stats":[{"first_placements":1,"is_rating_provisional":true,"plays":2,
+	"pool":{"active":true,"id":38,"name":"p","ruleset_id":1,"type":"ranked_play","variant_id":1},"pool_id":38,"rank":3,
+	"rank_percent":0.03,"rating":999,"recent_history":[{"created_at":"2026-01-02T03:04:05Z","elo_after":999,"id":1,"result":"win","room_id":2}],
+	"total_points":4,"user_id":2}],
+	"max_blocks":9,"max_friends":10,"monthly_playcounts":[{"start_date":"2007-10-01","count":1}],"nominated_beatmapset_count":11,
+	"occupation":"o","page":{"html":"<div></div>","raw":"[b]"},"pending_beatmapset_count":12,"playmode":"osu","playstyle":["mouse"],
+	"post_count":13,"previous_usernames":["old"],"profile_hue":252,"profile_order":["me"],
+	"rank_highest":{"rank":1,"updated_at":"2017-07-07T00:00:00Z"},"rank_history":{"mode":"osu","data":[1,2]},
+	"ranked_and_approved_beatmapset_count":14,"ranked_beatmapset_count":15,
+	"replays_watched_counts":[{"start_date":"2012-09-01","count":1}],"scores_best_count":16,"scores_first_count":17,
+	"scores_pinned_count":18,"scores_recent_count":19,"support_level":3,"title":"t","title_url":"tu","twitter":"tw",
+	"unranked_beatmapset_count":20,"user_achievements":[{"achieved_at":"2026-01-02T03:04:05Z","achievement_id":299}],"website":"w"`
+
 // decodeStrict fails on any key the target does not map
 func decodeStrict(t *testing.T, body string, into any) {
 	t.Helper()
@@ -73,6 +98,19 @@ func TestUserStatisticsMapsEveryKey(t *testing.T) {
 	var stats UserStatisticsExtended
 	decodeStrict(t, `{`+userStatisticsExtendedJSON+`}`, &stats)
 	assertFilled(t, "statistics", reflect.ValueOf(stats))
+}
+
+func TestGetUserFillsEveryField(t *testing.T) {
+	var body = `{` + userExtendedJSON + `}`
+
+	var keys UserExtended
+	decodeStrict(t, body, &keys)
+
+	user, err := clientWith(&roundTripFunc{body: body}).GetUser(2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertFilled(t, "user", reflect.ValueOf(*user))
 }
 
 func TestGetUsersFillsEveryField(t *testing.T) {
