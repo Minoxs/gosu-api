@@ -61,5 +61,9 @@ func (c *ResourceClient) GetOwnUser() (*UserExtended, error) {
 	if err != nil {
 		return nil, err
 	}
-	return decodeUserExtended(res)
+	user := &UserExtended{}
+	if err := decodeUser(res, user); err != nil {
+		return nil, err
+	}
+	return user, nil
 }

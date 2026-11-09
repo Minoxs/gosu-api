@@ -2,19 +2,18 @@ package gosu
 
 import "time"
 
-// Ranks is osu!'s nested rank block, carrying the country rank the flat
-// country_rank field duplicates on some responses.
+// Ranks is osu!'s nested rank block
 type Ranks struct {
 	Country *int `json:"country"`
 }
 
-// Level is a user's level and the percentage progress towards the next one.
+// Level is a user's level and the percentage progress towards the next one
 type Level struct {
 	Current  int     `json:"current"`
 	Progress float64 `json:"progress"`
 }
 
-// GradeCounts is how many ranked scores a user holds at each grade.
+// GradeCounts is how many ranked scores a user holds at each grade
 type GradeCounts struct {
 	A   int `json:"a"`
 	S   int `json:"s"`
@@ -23,9 +22,8 @@ type GradeCounts struct {
 	SSH int `json:"ssh"`
 }
 
-// UserStatistics is a user's osu!standard ranking summary. The single-user endpoint
-// returns it under statistics; the bulk users endpoint returns it per ruleset under
-// statistics_rulesets, so it is named for reuse across both.
+// UserStatistics is a user's osu!standard ranking summary as every user endpoint
+// reports it
 type UserStatistics struct {
 	Accuracy float64 `json:"accuracy"`
 	// Deprecated: use Accuracy, which is a fraction in [0, 1] where this is a percentage
@@ -47,69 +45,89 @@ type UserStatistics struct {
 	ReplaysWatchedByOthers int         `json:"replays_watched_by_others"`
 	TotalHits              int64       `json:"total_hits"`
 	TotalScore             int64       `json:"total_score"`
-	CountryRank            *int        `json:"country_rank"`
-	Rank                   Ranks       `json:"rank"`
 }
 
-// Country is an osu! user's country, present when the country attribute is included.
+// UserStatisticsExtended is UserStatistics plus the country standing the single-user
+// endpoints add
+type UserStatisticsExtended struct {
+	UserStatistics
+	CountryRank *int  `json:"country_rank"`
+	Rank        Ranks `json:"rank"`
+}
+
+// Country is an osu! user's country
 type Country struct {
 	Code string `json:"code"`
 	Name string `json:"name"`
 }
 
-// Cover is an osu! user's profile cover, present when the cover attribute is included.
+// Cover is an osu! user's profile cover
 type Cover struct {
-	URL string `json:"url"`
+	CustomURL *string `json:"custom_url"`
+	ID        *string `json:"id"`
+	URL       string  `json:"url"`
 }
 
-// User is osu!'s compact user object, returned embedded in other responses and by the
-// bulk users endpoint. Country, Cover, and Statistics are optional attributes the API
-// populates only when included or when the endpoint carries them.
+// UserGroup is a user's membership of an osu! group
+type UserGroup struct {
+	Colour         *string  `json:"colour"`
+	HasListing     bool     `json:"has_listing"`
+	HasPlaymodes   bool     `json:"has_playmodes"`
+	ID             int      `json:"id"`
+	Identifier     string   `json:"identifier"`
+	IsProbationary bool     `json:"is_probationary"`
+	Name           string   `json:"name"`
+	Playmodes      []string `json:"playmodes"`
+	ShortName      string   `json:"short_name"`
+}
+
+// Team is the osu! team a user belongs to
+type Team struct {
+	FlagURL   *string `json:"flag_url"`
+	ID        int64   `json:"id"`
+	Name      string  `json:"name"`
+	ShortName string  `json:"short_name"`
+}
+
+// User is the profile every user endpoint returns
 type User struct {
-	ID          int64          `json:"id"`
-	Username    string         `json:"username"`
-	CountryCode string         `json:"country_code"`
-	AvatarURL   string         `json:"avatar_url"`
-	CoverURL    string         `json:"cover_url"`
-	IsSupporter bool           `json:"is_supporter"`
-	IsOnline    bool           `json:"is_online"`
-	Country     Country        `json:"country"`
-	Cover       Cover          `json:"cover"`
-	Statistics  UserStatistics `json:"statistics"`
+	ID            int64       `json:"id"`
+	Username      string      `json:"username"`
+	AvatarURL     string      `json:"avatar_url"`
+	CountryCode   string      `json:"country_code"`
+	DefaultGroup  *string     `json:"default_group"`
+	IsActive      bool        `json:"is_active"`
+	IsBot         bool        `json:"is_bot"`
+	IsDeleted     bool        `json:"is_deleted"`
+	IsOnline      bool        `json:"is_online"`
+	IsSupporter   bool        `json:"is_supporter"`
+	LastVisit     *time.Time  `json:"last_visit"`
+	PMFriendsOnly bool        `json:"pm_friends_only"`
+	ProfileColour *string     `json:"profile_colour"`
+	Country       Country     `json:"country"`
+	Cover         Cover       `json:"cover"`
+	Groups        []UserGroup `json:"groups"`
+	Team          *Team       `json:"team"`
 }
 
-// UserExtended is the full osu! profile the single-user endpoint returns: the compact
-// User plus the fields that endpoint adds.
+// UserStatisticsRulesets is a user's statistics by ruleset. Osu is nil for an account
+// osu! holds no osu!standard statistics for
+type UserStatisticsRulesets struct {
+	Osu *UserStatistics `json:"osu"`
+}
+
+// UserWithRulesets is the profile the bulk users endpoint returns. StatisticsRulesets is
+// nil for an account osu! holds no statistics for
+type UserWithRulesets struct {
+	User
+	StatisticsRulesets *UserStatisticsRulesets `json:"statistics_rulesets"`
+}
+
+// UserExtended is the full osu! profile the single-user endpoints return
 type UserExtended struct {
 	User
-	JoinDate time.Time `json:"join_date"`
-}
-
-// Banner is the cover image URL, preferring the nested cover object the API populates.
-func (u *User) Banner() string {
-	if u.Cover.URL != "" {
-		return u.Cover.URL
-	}
-	return u.CoverURL
-}
-
-// GlobalRank is the all-time global rank, nil when the user is unranked.
-func (u *User) GlobalRank() *int {
-	return u.Statistics.GlobalRank
-}
-
-// CountryRank falls back to the legacy rank.country field when the flat one is absent.
-func (u *User) CountryRank() *int {
-	if u.Statistics.CountryRank != nil {
-		return u.Statistics.CountryRank
-	}
-	return u.Statistics.Rank.Country
-}
-
-// Country2 is the ISO alpha-2 code, preferring the nested country object.
-func (u *User) Country2() string {
-	if u.Country.Code != "" {
-		return u.Country.Code
-	}
-	return u.CountryCode
+	// Deprecated: use Cover.URL
+	CoverURL   string                 `json:"cover_url"`
+	Statistics UserStatisticsExtended `json:"statistics"`
+	JoinDate   time.Time              `json:"join_date"`
 }
