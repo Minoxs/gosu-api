@@ -52,27 +52,11 @@ func APIv2URL(endpoint string) string {
 
 // GetUserID resolves a username to its user id or ErrUserNotFound
 func (c *Client) GetUserID(username string) (int64, error) {
-	endpoint := fmt.Sprintf("users/%s/osu/?key=username", username)
-
-	req, _ := http.NewRequest(http.MethodGet, APIv2URL(endpoint), nil)
-	res, err := c.http.Do(req)
+	user, err := c.GetUserByName(username)
 	if err != nil {
 		return 0, err
 	}
-	defer res.Body.Close()
-
-	if res.StatusCode == 404 {
-		return 0, ErrUserNotFound
-	}
-	if res.StatusCode != 200 {
-		return 0, &StatusError{Code: res.StatusCode, Status: res.Status}
-	}
-
-	body := &User{}
-	if err := json.NewDecoder(res.Body).Decode(body); err != nil {
-		return 0, err
-	}
-	return body.ID, nil
+	return user.ID, nil
 }
 
 func decodeUser(res *http.Response, user any) error {
