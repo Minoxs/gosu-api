@@ -52,44 +52,24 @@ func APIv2URL(endpoint string) string {
 
 // GetUserID resolves a username to its user id or ErrUserNotFound
 func (c *Client) GetUserID(username string) (int64, error) {
-	endpoint := fmt.Sprintf("users/%s/osu/?key=username", username)
-
-	req, _ := http.NewRequest(http.MethodGet, APIv2URL(endpoint), nil)
-	res, err := c.http.Do(req)
+	user, err := c.GetUserByName(username)
 	if err != nil {
 		return 0, err
 	}
-	defer res.Body.Close()
-
-	if res.StatusCode == 404 {
-		return 0, ErrUserNotFound
-	}
-	if res.StatusCode != 200 {
-		return 0, &StatusError{Code: res.StatusCode, Status: res.Status}
-	}
-
-	body := &User{}
-	if err := json.NewDecoder(res.Body).Decode(body); err != nil {
-		return 0, err
-	}
-	return body.ID, nil
+	return user.ID, nil
 }
 
-func decodeUserExtended(res *http.Response) (*UserExtended, error) {
+func decodeUser(res *http.Response, user any) error {
 	defer res.Body.Close()
 
 	if res.StatusCode == 404 {
-		return nil, ErrUserNotFound
+		return ErrUserNotFound
 	}
 	if res.StatusCode != 200 {
-		return nil, &StatusError{Code: res.StatusCode, Status: res.Status}
+		return &StatusError{Code: res.StatusCode, Status: res.Status}
 	}
 
-	user := &UserExtended{}
-	if err := json.NewDecoder(res.Body).Decode(user); err != nil {
-		return nil, err
-	}
-	return user, nil
+	return json.NewDecoder(res.Body).Decode(user)
 }
 
 // GetUser fetches a profile by user id or ErrUserNotFound
@@ -99,17 +79,25 @@ func (c *Client) GetUser(id int64) (*UserExtended, error) {
 	if err != nil {
 		return nil, err
 	}
-	return decodeUserExtended(res)
+	user := &UserExtended{}
+	if err := decodeUser(res, user); err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 // GetUserByName fetches a profile by username or ErrUserNotFound
 func (c *Client) GetUserByName(username string) (*UserExtended, error) {
-	req, _ := http.NewRequest(http.MethodGet, APIv2URL(fmt.Sprintf("users/%s/osu?key=username", username)), nil)
+	req, _ := http.NewRequest(http.MethodGet, APIv2URL(fmt.Sprintf("users/%s/osu?key=username", url.PathEscape(username))), nil)
 	res, err := c.http.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	return decodeUserExtended(res)
+	user := &UserExtended{}
+	if err := decodeUser(res, user); err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 // getUserScores fetches one page of users/{id}/scores/{kind}, decoding into the
@@ -257,8 +245,7 @@ func (c *Client) GetBeatmapAttributes(id int64, mods []string) (DifficultyAttrib
 
 // GetUsers fetches profiles for many ids in one request keyed by id in any order
 // Returns ErrTooManyIDs above maxBulkIDs
-// The bulk endpoint omits country rank so CountryRank and Rank stay nil
-func (c *Client) GetUsers(ids []int64) ([]*User, error) {
+func (c *Client) GetUsers(ids []int64) ([]*UserWithRulesets, error) {
 	if len(ids) > maxBulkIDs {
 		return nil, ErrTooManyIDs
 	}
@@ -278,26 +265,12 @@ func (c *Client) GetUsers(ids []int64) ([]*User, error) {
 	}
 
 	page := struct {
-		Users []struct {
-			User
-			StatisticsRulesets struct {
-				Osu UserStatistics `json:"osu"`
-			} `json:"statistics_rulesets"`
-		} `json:"users"`
+		Users []*UserWithRulesets `json:"users"`
 	}{}
 	if err := json.NewDecoder(res.Body).Decode(&page); err != nil {
 		return nil, err
 	}
-
-	profiles := make([]*User, 0, len(page.Users))
-	for i := range page.Users {
-		p := page.Users[i].User
-		if p.Statistics == (UserStatistics{}) {
-			p.Statistics = page.Users[i].StatisticsRulesets.Osu
-		}
-		profiles = append(profiles, &p)
-	}
-	return profiles, nil
+	return page.Users, nil
 }
 
 // GetBeatmaps fetches metadata for many beatmap ids in one request keyed by id in any order

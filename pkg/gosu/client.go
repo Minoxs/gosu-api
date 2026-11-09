@@ -55,11 +55,15 @@ func NewResourceClient(l *RateLimiter, prio Priority, src ResourceOwnerSource, o
 }
 
 // GetOwnUser fetches the osu!standard profile of the user the resource token belongs to.
-func (c *ResourceClient) GetOwnUser() (*UserExtended, error) {
+func (c *ResourceClient) GetOwnUser() (*OwnUser, error) {
 	req, _ := http.NewRequest(http.MethodGet, APIv2URL("me/osu"), nil)
 	res, err := c.http.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	return decodeUserExtended(res)
+	user := &OwnUser{}
+	if err := decodeUser(res, user); err != nil {
+		return nil, err
+	}
+	return user, nil
 }

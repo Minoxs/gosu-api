@@ -80,9 +80,7 @@ func TestGetUsersEmptySkipsRequest(t *testing.T) {
 	}
 }
 
-// The bulk users endpoint reports ranking stats per ruleset; GetUsers folds the osu!
-// ruleset stats onto Statistics so the shape matches the single-user endpoint.
-func TestGetUsersFoldsRulesetStats(t *testing.T) {
+func TestGetUsersDecodesRulesetStats(t *testing.T) {
 	rt := &roundTripFunc{body: `{"users":[{"id":9,"username":"a","statistics_rulesets":{"osu":{"pp":1234.5,"global_rank":10}}}]}`}
 	got, err := clientWith(rt).GetUsers([]int64{9})
 	if err != nil {
@@ -91,11 +89,12 @@ func TestGetUsersFoldsRulesetStats(t *testing.T) {
 	if len(got) != 1 {
 		t.Fatalf("got %d profiles, want 1", len(got))
 	}
-	if got[0].Statistics.PP != 1234.5 {
-		t.Fatalf("PP = %v, want 1234.5", got[0].Statistics.PP)
+	var stats = got[0].StatisticsRulesets.Osu
+	if stats.PP != 1234.5 {
+		t.Fatalf("PP = %v, want 1234.5", stats.PP)
 	}
-	if got[0].GlobalRank() == nil || *got[0].GlobalRank() != 10 {
-		t.Fatalf("GlobalRank = %v, want 10", got[0].GlobalRank())
+	if stats.GlobalRank == nil || *stats.GlobalRank != 10 {
+		t.Fatalf("GlobalRank = %v, want 10", stats.GlobalRank)
 	}
 }
 
