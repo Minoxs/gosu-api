@@ -100,6 +100,23 @@ func TestUserStatisticsMapsEveryKey(t *testing.T) {
 	assertFilled(t, "statistics", reflect.ValueOf(stats))
 }
 
+// osu! falls back to the user's default mode when the path omits one
+func TestUserEndpointsRequestStandard(t *testing.T) {
+	var calls = map[string]func(*Client) error{
+		"users/2/osu":              func(c *Client) error { _, err := c.GetUser(2); return err },
+		"users/a/osu?key=username": func(c *Client) error { _, err := c.GetUserByName("a"); return err },
+	}
+	for want, call := range calls {
+		var rt = &roundTripFunc{body: `{"id":2}`}
+		if err := call(clientWith(rt)); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.HasSuffix(rt.lastURL, want) {
+			t.Errorf("requested %s, want suffix %s", rt.lastURL, want)
+		}
+	}
+}
+
 func TestGetUserFillsEveryField(t *testing.T) {
 	var body = `{` + userExtendedJSON + `}`
 
