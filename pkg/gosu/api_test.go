@@ -182,6 +182,45 @@ func TestGetBeatmapAttributesPostsMods(t *testing.T) {
 	}
 }
 
+func TestGetBeatmapAttributesDecodesEveryField(t *testing.T) {
+	rt := &roundTripFunc{body: `{"attributes":{"star_rating":3.38,"max_combo":222,` +
+		`"aim_difficulty":1.84,"aim_difficult_slider_count":29.1,"speed_difficulty":1.16,` +
+		`"speed_note_count":23.8,"flashlight_difficulty":0.9,"reading_difficulty":1.12,` +
+		`"slider_factor":0.71,"aim_top_weighted_slider_factor":0.5,"speed_top_weighted_slider_factor":0.33,` +
+		`"aim_difficult_strain_count":23.7,"speed_difficult_strain_count":19.1,` +
+		`"reading_difficult_note_count":56.2,"nested_score_per_object":71.6,` +
+		`"legacy_score_base_multiplier":3,"maximum_legacy_combo_score":431496}}`}
+	got, err := clientWith(rt).GetBeatmapAttributes(100, []string{"FL"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := DifficultyAttributes{
+		StarRating: 3.38, MaxCombo: 222, AimDifficulty: 1.84, AimDifficultSliderCount: 29.1,
+		SpeedDifficulty: 1.16, SpeedNoteCount: 23.8, ReadingDifficulty: 1.12, SliderFactor: 0.71,
+		AimTopWeightedSliderFactor: 0.5, SpeedTopWeightedSliderFactor: 0.33,
+		AimDifficultStrainCount: 23.7, SpeedDifficultStrainCount: 19.1, ReadingDifficultNoteCount: 56.2,
+		NestedScorePerObject: 71.6, LegacyScoreBaseMultiplier: 3, MaximumLegacyComboScore: 431496,
+	}
+	if got.FlashlightDifficulty == nil || *got.FlashlightDifficulty != 0.9 {
+		t.Fatalf("flashlight = %v", got.FlashlightDifficulty)
+	}
+	got.FlashlightDifficulty = nil
+	if got != want {
+		t.Fatalf("attributes = %+v", got)
+	}
+}
+
+func TestGetBeatmapAttributesLeavesFlashlightNilWithoutIt(t *testing.T) {
+	rt := &roundTripFunc{body: `{"attributes":{"star_rating":3.38,"max_combo":222}}`}
+	got, err := clientWith(rt).GetBeatmapAttributes(100, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.FlashlightDifficulty != nil {
+		t.Fatalf("flashlight = %v, want nil", *got.FlashlightDifficulty)
+	}
+}
+
 func TestGetBeatmapAttributesNotFound(t *testing.T) {
 	rt := &roundTripFunc{status: 404}
 	_, err := clientWith(rt).GetBeatmapAttributes(5, nil)

@@ -54,11 +54,27 @@ type BeatmapExtended struct {
 	DeletedAt     *time.Time    `json:"deleted_at"`
 }
 
-// DifficultyAttributes is a beatmap's difficulty under one mod combination. Star rating
-// and max combo are the fields osu! returns for every ruleset.
+// DifficultyAttributes is a beatmap's osu!standard difficulty under one mod combination.
+// FlashlightDifficulty is nil unless the combination includes Flashlight, since osu! only
+// sends it then
 type DifficultyAttributes struct {
-	StarRating float32 `json:"star_rating"`
-	MaxCombo   int     `json:"max_combo"`
+	StarRating                   float32  `json:"star_rating"`
+	MaxCombo                     int      `json:"max_combo"`
+	AimDifficulty                float64  `json:"aim_difficulty"`
+	AimDifficultSliderCount      float64  `json:"aim_difficult_slider_count"`
+	SpeedDifficulty              float64  `json:"speed_difficulty"`
+	SpeedNoteCount               float64  `json:"speed_note_count"`
+	FlashlightDifficulty         *float64 `json:"flashlight_difficulty"`
+	ReadingDifficulty            float64  `json:"reading_difficulty"`
+	SliderFactor                 float64  `json:"slider_factor"`
+	AimTopWeightedSliderFactor   float64  `json:"aim_top_weighted_slider_factor"`
+	SpeedTopWeightedSliderFactor float64  `json:"speed_top_weighted_slider_factor"`
+	AimDifficultStrainCount      float64  `json:"aim_difficult_strain_count"`
+	SpeedDifficultStrainCount    float64  `json:"speed_difficult_strain_count"`
+	ReadingDifficultNoteCount    float64  `json:"reading_difficult_note_count"`
+	NestedScorePerObject         float64  `json:"nested_score_per_object"`
+	LegacyScoreBaseMultiplier    float64  `json:"legacy_score_base_multiplier"`
+	MaximumLegacyComboScore      float64  `json:"maximum_legacy_combo_score"`
 }
 
 // Covers holds the image URLs the osu API attaches to a beatmapset.
